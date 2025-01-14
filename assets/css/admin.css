@@ -304,3 +304,46 @@ button:disabled {
     color: #135e96;
     outline: none;
 } 
+
+/* Dynamic Rows Styling */
+.dynamic-replacements {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+}
+
+.dynamic-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.dynamic-row .find-replace-group {
+    flex: 1;
+}
+
+.remove-row {
+    color: #dc3232;
+    cursor: pointer;
+    padding: 5px;
+    border: 1px solid #dc3232;
+    border-radius: 4px;
+    background: #fff;
+    line-height: 1;
+}
+
+.remove-row:hover {
+    background: #dc3232;
+    color: #fff;
+}
+
+.add-row {
+    margin-top: 10px !important;
+} 

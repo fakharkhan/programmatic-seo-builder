@@ -81,39 +81,18 @@ class PSEO_Admin {
                                     </div>
                                     <div class="replace-field">
                                         <label for="keyword">Replace with:</label>
-                                        <input type="text" id="keyword" name="keyword" placeholder="e.g. Web Developer">
+                                        <input type="text" id="keyword" name="keyword" 
+                                               placeholder="e.g. Web Developer">
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="form-group location-group">
-                                <label>Location:</label>
-                                <div class="find-replace-group">
-                                    <div class="find-field">
-                                        <label for="location_find">Find:</label>
-                                        <input type="text" id="location_find" name="location_find" 
-                                               placeholder="e.g., Alabama">
-                                    </div>
-                                    <div class="replace-field">
-                                        <label for="location">Replace with:</label>
-                                        <input type="text" id="location" name="location" placeholder="e.g., New York">
-                                    </div>
+                            <div class="form-group dynamic-replacements">
+                                <label>Additional Find & Replace:</label>
+                                <div id="dynamic-rows">
+                                    <!-- Dynamic rows will be added here -->
                                 </div>
-                            </div>
-
-                            <div class="form-group skill-group">
-                                <label>Skill Set:</label>
-                                <div class="find-replace-group">
-                                    <div class="find-field">
-                                        <label for="skill_find">Find:</label>
-                                        <input type="text" id="skill_find" name="skill_find" 
-                                               placeholder="e.g. React">
-                                    </div>
-                                    <div class="replace-field">
-                                        <label for="skill_set">Replace with:</label>
-                                        <input type="text" id="skill_set" name="skill_set" placeholder="e.g. JavaScript">
-                                    </div>
-                                </div>
+                                <button type="button" class="button add-row">+ Add Find & Replace</button>
                             </div>
 
                             <div class="form-group-submit">

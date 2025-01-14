@@ -114,6 +114,32 @@ class PSEO_Page_Generator {
             return;
         }
 
+        // Get all SEO related meta keys we want to process
+        $seo_meta_keys = array(
+            // Yoast SEO
+            '_yoast_wpseo_title',
+            '_yoast_wpseo_metadesc',
+            '_yoast_wpseo_focuskw',
+            '_yoast_wpseo_meta-robots-noindex',
+            '_yoast_wpseo_meta-robots-nofollow',
+            '_yoast_wpseo_meta-robots-adv',
+            '_yoast_wpseo_canonical',
+            '_yoast_wpseo_bctitle',
+            '_yoast_wpseo_opengraph-title',
+            '_yoast_wpseo_opengraph-description',
+            // RankMath
+            'rank_math_title',
+            'rank_math_description',
+            'rank_math_focus_keyword',
+            // All in One SEO
+            '_aioseo_title',
+            '_aioseo_description',
+            '_aioseo_keywords',
+            // Our plugin's meta
+            '_pseo_meta_description',
+            '_pseo_meta_title'
+        );
+
         // Get the template page
         $template = get_post($template_id);
         if (!$template) {
@@ -121,10 +147,11 @@ class PSEO_Page_Generator {
             return;
         }
 
-        // Create the new page
+        // Create the new page with replaced content
         $new_page = array(
             'post_title'    => $this->replace_placeholders($template->post_title, $replacements),
             'post_content'  => $this->replace_placeholders($template->post_content, $replacements),
+            'post_excerpt'  => $this->replace_placeholders($template->post_excerpt, $replacements),
             'post_status'   => 'draft',
             'post_type'     => 'page',
             'post_author'   => get_current_user_id(),
@@ -139,25 +166,54 @@ class PSEO_Page_Generator {
             return;
         }
 
-        // Copy template meta
+        // Copy and process all meta data
         $template_meta = get_post_meta($template_id);
         if ($template_meta) {
             foreach ($template_meta as $key => $values) {
-                if (in_array($key, array('_edit_lock', '_edit_last'))) continue;
-                
+                // Skip internal WordPress meta
+                if (in_array($key, array('_edit_lock', '_edit_last'))) {
+                    continue;
+                }
+
                 foreach ($values as $value) {
                     $meta_value = maybe_unserialize($value);
-                    if (is_string($meta_value)) {
+                    
+                    // If this is a SEO meta key or the value is a string, apply replacements
+                    if (in_array($key, $seo_meta_keys) || is_string($meta_value)) {
                         $meta_value = $this->replace_placeholders($meta_value, $replacements);
                     }
+                    
                     update_post_meta($new_page_id, $key, $meta_value);
                 }
             }
         }
 
-        // Generate and update meta description
-        $meta_description = $this->generate_meta_description($new_page_id, $replacements);
-        update_post_meta($new_page_id, '_pseo_meta_description', $meta_description);
+        // Generate meta description if none exists
+        if (!get_post_meta($new_page_id, '_yoast_wpseo_metadesc', true) && 
+            !get_post_meta($new_page_id, 'rank_math_description', true) && 
+            !get_post_meta($new_page_id, '_aioseo_description', true) && 
+            !get_post_meta($new_page_id, '_pseo_meta_description', true)) {
+            
+            $meta_description = $this->generate_meta_description($new_page_id, $replacements);
+            
+            // Update meta description for all supported SEO plugins
+            update_post_meta($new_page_id, '_yoast_wpseo_metadesc', $meta_description);
+            update_post_meta($new_page_id, 'rank_math_description', $meta_description);
+            update_post_meta($new_page_id, '_aioseo_description', $meta_description);
+            update_post_meta($new_page_id, '_pseo_meta_description', $meta_description);
+        }
+
+        // Add generation metadata
+        update_post_meta($new_page_id, '_pseo_generated', true);
+        update_post_meta($new_page_id, '_pseo_generated_date', current_time('mysql'));
+        update_post_meta($new_page_id, '_pseo_template_id', $template_id);
+
+        // Handle structured data if it exists
+        $structured_data = get_post_meta($template_id, '_pseo_structured_data', true);
+        if ($structured_data) {
+            $updated_structured_data = $this->replace_placeholders($structured_data, $replacements);
+            update_post_meta($new_page_id, '_pseo_structured_data', $updated_structured_data);
+        }
 
         wp_send_json_success(array(
             'page_id' => $new_page_id,
@@ -167,8 +223,14 @@ class PSEO_Page_Generator {
     }
 
     private function replace_placeholders($content, $replacements) {
+        if (!is_string($content)) {
+            return $content;
+        }
+
         foreach ($replacements as $type => $replacement) {
-            $content = str_replace($replacement['find'], $replacement['replace'], $content);
+            if (!empty($replacement['find']) && !empty($replacement['replace'])) {
+                $content = str_replace($replacement['find'], $replacement['replace'], $content);
+            }
         }
         return $content;
     }
@@ -183,6 +245,12 @@ class PSEO_Page_Generator {
         $last_period = strrpos(substr($meta_desc, 0, 157), '.');
         if ($last_period !== false) {
             $meta_desc = substr($meta_desc, 0, $last_period + 1);
+        } else {
+            // If no period found, try to end at a space to avoid cutting words
+            $last_space = strrpos(substr($meta_desc, 0, 157), ' ');
+            if ($last_space !== false) {
+                $meta_desc = substr($meta_desc, 0, $last_space) . '...';
+            }
         }
         
         return $meta_desc;

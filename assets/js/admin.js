@@ -61,14 +61,18 @@ jQuery(document).ready(function($) {
             find: $('#keyword_find').val().trim(),
             replace: $('#keyword').val().trim()
         };
-        const location = {
-            find: $('#location_find').val().trim(),
-            replace: $('#location').val().trim()
-        };
-        const skillSet = {
-            find: $('#skill_find').val().trim(),
-            replace: $('#skill_set').val().trim()
-        };
+
+        // Get dynamic rows values
+        const dynamicReplacements = [];
+        $('.dynamic-row').each(function() {
+            const rowId = $(this).data('row');
+            const find = $(`#dynamic_find_${rowId}`).val().trim();
+            const replace = $(`#dynamic_replace_${rowId}`).val().trim();
+            
+            if (find && replace) {
+                dynamicReplacements.push({ find, replace });
+            }
+        });
 
         if (!templatePage) {
             showMessage('Please select a template page.', 'error');
@@ -77,37 +81,33 @@ jQuery(document).ready(function($) {
 
         // Check if at least one find/replace pair is provided
         const hasKeywordPair = keyword.find && keyword.replace;
-        const hasLocationPair = location.find && location.replace;
-        const hasSkillPair = skillSet.find && skillSet.replace;
+        const hasDynamicPairs = dynamicReplacements.length > 0;
 
-        if (!hasKeywordPair && !hasLocationPair && !hasSkillPair) {
+        if (!hasKeywordPair && !hasDynamicPairs) {
             showMessage('Please provide at least one find and replace pair.', 'error');
             return;
         }
 
-        // Validate that if one field is filled, its pair must also be filled
+        // Validate keyword pair if provided
         if ((keyword.find && !keyword.replace) || (!keyword.find && keyword.replace)) {
             showMessage('Please provide both find and replace values for Primary Keyword.', 'error');
-            return;
-        }
-        if ((location.find && !location.replace) || (!location.find && location.replace)) {
-            showMessage('Please provide both find and replace values for Location.', 'error');
-            return;
-        }
-        if ((skillSet.find && !skillSet.replace) || (!skillSet.find && skillSet.replace)) {
-            showMessage('Please provide both find and replace values for Skill Set.', 'error');
             return;
         }
 
         submitButton.prop('disabled', true).text('Generating Page...');
 
-        // Only include pairs that have both values in the AJAX request
+        // Prepare replacements object
         const replacements = {};
-        if (hasKeywordPair) replacements.keyword = keyword;
-        if (hasLocationPair) replacements.location = location;
-        if (hasSkillPair) replacements.skill_set = skillSet;
+        if (hasKeywordPair) {
+            replacements.keyword = keyword;
+        }
+        
+        // Add dynamic replacements
+        dynamicReplacements.forEach((item, index) => {
+            replacements[`dynamic_${index}`] = item;
+        });
 
-        // Generate single page
+        // Generate page
         $.ajax({
             url: pseoAjax.ajaxurl,
             type: 'POST',
@@ -211,5 +211,43 @@ jQuery(document).ready(function($) {
     $(document).on('click', 'a[target="_blank"]', function(e) {
         e.preventDefault();
         window.open($(this).attr('href'), '_blank');
+    });
+
+    // Add this after existing document.ready code
+    let rowCounter = 0;
+
+    // Function to create new row
+    function createDynamicRow() {
+        rowCounter++;
+        const row = $(`
+            <div class="dynamic-row" data-row="${rowCounter}">
+                <div class="find-replace-group">
+                    <div class="find-field">
+                        <label for="dynamic_find_${rowCounter}">Find:</label>
+                        <input type="text" id="dynamic_find_${rowCounter}" name="dynamic_find_${rowCounter}" 
+                               placeholder="Text to find">
+                    </div>
+                    <div class="replace-field">
+                        <label for="dynamic_replace_${rowCounter}">Replace with:</label>
+                        <input type="text" id="dynamic_replace_${rowCounter}" name="dynamic_replace_${rowCounter}" 
+                               placeholder="Text to replace with">
+                    </div>
+                </div>
+                <button type="button" class="remove-row dashicons dashicons-no-alt" title="Remove row"></button>
+            </div>
+        `);
+        
+        $('#dynamic-rows').append(row);
+        return row;
+    }
+
+    // Add row button handler
+    $('.add-row').on('click', function() {
+        createDynamicRow();
+    });
+
+    // Remove row handler
+    $(document).on('click', '.remove-row', function() {
+        $(this).closest('.dynamic-row').remove();
     });
 }); 
