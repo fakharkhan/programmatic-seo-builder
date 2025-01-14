@@ -58,32 +58,62 @@ class PSEO_Admin {
                         <form id="pseo-generator-form">
                             <div class="form-group">
                                 <label for="template_page">Select Template Page:</label>
-                                <select id="template_page" name="template_page" >
-                                    <option value="">Select a page...</option>
-                                    <?php foreach ($pages as $page): ?>
-                                        <option value="<?php echo esc_attr($page->ID); ?>">
-                                            <?php echo esc_html($page->post_title); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
+                                <div class="template-select-group">
+                                    <select id="template_page" name="template_page">
+                                        <option value="">Select a page...</option>
+                                        <?php foreach ($pages as $page): ?>
+                                            <option value="<?php echo esc_attr($page->ID); ?>">
+                                                <?php echo esc_html($page->post_title); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <a href="#" class="preview-template dashicons dashicons-visibility" id="preview-template" title="View template page" target="_blank" style="display: none;"></a>
+                                </div>
                             </div>
 
-                            <div class="form-group">
-                                <label for="keyword">Primary Keyword:</label>
-                                <input type="text" id="keyword" name="keyword" required 
-                                       placeholder="Enter primary keyword (e.g., Web Developer, Digital Marketing)">
+                            <div class="form-group keyword-group">
+                                <label>Primary Keyword:</label>
+                                <div class="find-replace-group">
+                                    <div class="find-field">
+                                        <label for="keyword_find">Find:</label>
+                                        <input type="text" id="keyword_find" name="keyword_find" 
+                                               placeholder="e.g. Web Designer">
+                                    </div>
+                                    <div class="replace-field">
+                                        <label for="keyword">Replace with:</label>
+                                        <input type="text" id="keyword" name="keyword" placeholder="e.g. Web Developer">
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="form-group">
-                                <label for="location">Location:</label>
-                                <input type="text" id="location" name="location" required 
-                                       placeholder="Enter locations separated by commas (e.g., New York, London, Sydney)">
+                            <div class="form-group location-group">
+                                <label>Location:</label>
+                                <div class="find-replace-group">
+                                    <div class="find-field">
+                                        <label for="location_find">Find:</label>
+                                        <input type="text" id="location_find" name="location_find" 
+                                               placeholder="e.g., Alabama">
+                                    </div>
+                                    <div class="replace-field">
+                                        <label for="location">Replace with:</label>
+                                        <input type="text" id="location" name="location" placeholder="e.g., New York">
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="form-group">
-                                <label for="skill_set">Skill Set:</label>
-                                <input type="text" id="skill_set" name="skill_set" required 
-                                       placeholder="Enter skills separated by commas (e.g., JavaScript, React, Node.js)">
+                            <div class="form-group skill-group">
+                                <label>Skill Set:</label>
+                                <div class="find-replace-group">
+                                    <div class="find-field">
+                                        <label for="skill_find">Find:</label>
+                                        <input type="text" id="skill_find" name="skill_find" 
+                                               placeholder="e.g. React">
+                                    </div>
+                                    <div class="replace-field">
+                                        <label for="skill_set">Replace with:</label>
+                                        <input type="text" id="skill_set" name="skill_set" placeholder="e.g. JavaScript">
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="form-group-submit">

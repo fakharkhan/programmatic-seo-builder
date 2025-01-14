@@ -90,57 +90,6 @@
     margin-top: 30px;
 }
 
-/* Preview Container */
-.preview-actions {
-    margin-top: 20px;
-    border-top: 1px solid #ddd;
-    padding-top: 20px;
-}
-
-.preview-actions #preview-content {
-    margin-bottom: 20px;
-}
-
-.preview-container {
-    margin-top: 20px;
-    padding: 20px;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    display: none;
-}
-
-.preview-container:not(:empty) {
-    display: block;
-}
-
-.preview-content {
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #eee;
-}
-
-.preview-meta {
-    background: #f9f9f9;
-    padding: 15px;
-    border-radius: 4px;
-}
-
-.preview-meta h4 {
-    margin: 0 0 10px 0;
-    color: #23282d;
-}
-
-.meta-preview {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-    font-size: 13px;
-    line-height: 1.4;
-    color: #545454;
-    background: #fff;
-    padding: 10px;
-    border: 1px solid #e5e5e5;
-    border-radius: 3px;
-}
 
 /* Loading State */
 .loading {
@@ -276,4 +225,82 @@ button:disabled {
     margin-bottom: 20px;
     font-style: italic;
     color: #1e1e1e;
+} 
+
+/* Find and Replace Fields */
+.find-replace-group {
+    display: flex;
+    gap: 20px;
+    margin-top: 5px;
+}
+
+.find-field,
+.replace-field {
+    flex: 1;
+}
+
+.find-field label,
+.replace-field label {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 3px;
+    color: #666;
+}
+
+.find-field input,
+.replace-field input {
+    width: 100%;
+}
+
+.keyword-group,
+.location-group,
+.skill-group {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+}
+
+.keyword-group > label,
+.location-group > label,
+.skill-group > label {
+    font-weight: 600;
+    color: #23282d;
+    margin-bottom: 10px;
+    display: block;
+}
+
+/* Template select group */
+.template-select-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.template-select-group select {
+    flex: 1;
+}
+
+.preview-template {
+    text-decoration: none;
+    color: #666;
+    padding: 4px;
+    line-height: 1;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f9f9f9;
+}
+
+.preview-template:hover {
+    color: #135e96;
+    background: #f0f0f1;
+    border-color: #0a4b78;
+}
+
+.preview-template:focus {
+    box-shadow: 0 0 0 1px #2271b1;
+    border-color: #2271b1;
+    color: #135e96;
+    outline: none;
 } 

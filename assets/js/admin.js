@@ -49,159 +49,88 @@ jQuery(document).ready(function($) {
         });
     });
 
-    // Preview content
-    function updatePreview() {
-        const form = $('#pseo-generator-form');
-        const previewButton = $('#preview-content');
-        const previewContainer = $('#content-preview');
-        
-        if (!form[0].checkValidity()) {
-            showMessage('Please fill in all required fields before generating preview.', 'error');
-            return;
-        }
-
-        // Get the first location and skill set for preview
-        const location = $('#location').val().split(',')[0].trim();
-        const skillSet = $('#skill_set').val().split(',')[0].trim();
-
-        if (!location || !skillSet) {
-            showMessage('Please enter at least one location and one skill set.', 'error');
-            return;
-        }
-
-        previewButton.prop('disabled', true).text('Generating Preview...');
-        previewContainer.html('<div class="loading">Generating preview...</div>');
-
-        $.ajax({
-            url: pseoAjax.ajaxurl,
-            type: 'POST',
-            data: {
-                action: 'pseo_preview_content',
-                nonce: pseoAjax.nonce,
-                template_page: $('#template_page').val(),
-                location: location,
-                keyword: $('#keyword').val(),
-                skill_set: skillSet
-            },
-            success: function(response) {
-                if (response.success) {
-                    previewContainer.html(
-                        '<div class="preview-content">' + 
-                        '<div class="preview-info">Preview showing content for first location and skill set combination.</div>' +
-                        response.data.content +
-                        '</div>' +
-                        '<div class="preview-meta">' +
-                        '<h4>Meta Description Preview:</h4>' +
-                        '<div class="meta-preview">' + response.data.meta_description + '</div>' +
-                        '</div>'
-                    );
-                    showMessage('Preview generated successfully!', 'success');
-                } else {
-                    showMessage(response.data.message, 'error');
-                    previewContainer.html('<div class="error">Failed to generate preview</div>');
-                }
-            },
-            error: function() {
-                showMessage('Error generating preview. Please try again.', 'error');
-                previewContainer.html('<div class="error">Error generating preview</div>');
-            },
-            complete: function() {
-                previewButton.prop('disabled', false).text('Preview Content');
-            }
-        });
-    }
-
-    // Add preview button and container to the form
-    $('#pseo-generator-form').append(
-        '<div class="preview-actions">' +
-        '<button type="button" id="preview-content" class="button button-secondary">Preview Content</button>' +
-        '<div id="content-preview" class="preview-container"></div>' +
-        '</div>'
-    );
-
-    // Handle preview button click
-    $('#preview-content').on('click', function(e) {
-        e.preventDefault();
-        updatePreview();
-    });
-
-    // Generate Page
+    // Generate Page Form Handler
     $('#pseo-generator-form').on('submit', function(e) {
         e.preventDefault();
         const form = $(this);
         const submitButton = form.find('button[type="submit"]');
         
-        // Validate form
-        if (!form[0].checkValidity()) {
-            return;
-        }
-
         // Get form values
         const templatePage = $('#template_page').val();
-        const keyword = $('#keyword').val();
-        const locations = $('#location').val().split(',').map(item => item.trim()).filter(Boolean);
-        const skillSets = $('#skill_set').val().split(',').map(item => item.trim()).filter(Boolean);
+        const keyword = {
+            find: $('#keyword_find').val().trim(),
+            replace: $('#keyword').val().trim()
+        };
+        const location = {
+            find: $('#location_find').val().trim(),
+            replace: $('#location').val().trim()
+        };
+        const skillSet = {
+            find: $('#skill_find').val().trim(),
+            replace: $('#skill_set').val().trim()
+        };
 
-        if (!locations.length || !skillSets.length) {
-            showMessage('Please enter at least one location and one skill set.', 'error');
+        if (!templatePage) {
+            showMessage('Please select a template page.', 'error');
             return;
         }
 
-        const totalPages = locations.length * skillSets.length;
-        if (!confirm(`This will generate ${totalPages} pages (${locations.length} locations × ${skillSets.length} skills). Do you want to continue?`)) {
+        // Check if at least one find/replace pair is provided
+        const hasKeywordPair = keyword.find && keyword.replace;
+        const hasLocationPair = location.find && location.replace;
+        const hasSkillPair = skillSet.find && skillSet.replace;
+
+        if (!hasKeywordPair && !hasLocationPair && !hasSkillPair) {
+            showMessage('Please provide at least one find and replace pair.', 'error');
             return;
         }
 
-        submitButton.prop('disabled', true).text('Generating Pages...');
-        let completedPages = 0;
-        let errors = [];
-
-        // Function to generate a single page
-        function generatePage(location, skillSet) {
-            return $.ajax({
-                url: pseoAjax.ajaxurl,
-                type: 'POST',
-                data: {
-                    action: 'pseo_generate_page',
-                    nonce: pseoAjax.nonce,
-                    template_page: templatePage,
-                    location: location,
-                    keyword: keyword,
-                    skill_set: skillSet
-                }
-            }).always(function() {
-                completedPages++;
-                const progress = Math.round((completedPages / totalPages) * 100);
-                submitButton.text(`Generating... ${progress}%`);
-            });
+        // Validate that if one field is filled, its pair must also be filled
+        if ((keyword.find && !keyword.replace) || (!keyword.find && keyword.replace)) {
+            showMessage('Please provide both find and replace values for Primary Keyword.', 'error');
+            return;
+        }
+        if ((location.find && !location.replace) || (!location.find && location.replace)) {
+            showMessage('Please provide both find and replace values for Location.', 'error');
+            return;
+        }
+        if ((skillSet.find && !skillSet.replace) || (!skillSet.find && skillSet.replace)) {
+            showMessage('Please provide both find and replace values for Skill Set.', 'error');
+            return;
         }
 
-        // Generate pages for each combination
-        const promises = [];
-        locations.forEach(location => {
-            skillSets.forEach(skillSet => {
-                promises.push(generatePage(location, skillSet));
-            });
-        });
+        submitButton.prop('disabled', true).text('Generating Page...');
 
-        // Handle all completions
-        Promise.all(promises.map(p => p.catch(e => e)))
-            .then(results => {
-                const successCount = results.filter(r => r.success).length;
-                const errorCount = results.filter(r => !r.success).length;
+        // Only include pairs that have both values in the AJAX request
+        const replacements = {};
+        if (hasKeywordPair) replacements.keyword = keyword;
+        if (hasLocationPair) replacements.location = location;
+        if (hasSkillPair) replacements.skill_set = skillSet;
 
-                if (errorCount === 0) {
-                    showMessage(`Successfully generated ${successCount} pages!`, 'success');
+        // Generate single page
+        $.ajax({
+            url: pseoAjax.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'pseo_clone_page',
+                nonce: pseoAjax.nonce,
+                template_id: templatePage,
+                replacements: replacements
+            },
+            success: function(response) {
+                if (response.success) {
+                    showMessage('Page generated successfully!', 'success');
                 } else {
-                    showMessage(`Generated ${successCount} pages with ${errorCount} errors.`, 'warning');
+                    showMessage(response.data.message || 'Error generating page.', 'error');
                 }
-            })
-            .catch(error => {
-                showMessage('Error generating pages. Please try again.', 'error');
-            })
-            .finally(() => {
+            },
+            error: function() {
+                showMessage('Error generating page. Please try again.', 'error');
+            },
+            complete: function() {
                 submitButton.prop('disabled', false).text('Generate Page');
-            });
+            }
+        });
     });
 
     // Helper function to show messages
@@ -224,4 +153,57 @@ jQuery(document).ready(function($) {
             });
         }, 5000);
     }
+
+    // Add this after the form validation code
+    const formData = {
+        keyword: {
+            find: $('#keyword_find').val() || '[keyword]',
+            replace: $('#keyword').val()
+        },
+        location: {
+            find: $('#location_find').val() || '[location]',
+            replace: $('#location').val()
+        },
+        skill_set: {
+            find: $('#skill_find').val() || '[skill_set]',
+            replace: $('#skill_set').val()
+        }
+    };
+
+    // Add this after the existing document.ready code
+    $('#template_page').on('change', function() {
+        const templateId = $(this).val();
+        const previewLink = $('#preview-template');
+        
+        if (templateId) {
+            // Get the permalink via AJAX
+            $.ajax({
+                url: pseoAjax.ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'pseo_get_template_url',
+                    nonce: pseoAjax.nonce,
+                    template_id: templateId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        previewLink.attr('href', response.data.url).show();
+                    } else {
+                        previewLink.hide();
+                    }
+                },
+                error: function() {
+                    previewLink.hide();
+                }
+            });
+        } else {
+            previewLink.hide();
+        }
+    });
+
+    // Make sure links with target="_blank" open in new tab
+    $(document).on('click', 'a[target="_blank"]', function(e) {
+        e.preventDefault();
+        window.open($(this).attr('href'), '_blank');
+    });
 }); 
