@@ -347,3 +347,78 @@ button:disabled {
 .add-row {
     margin-top: 10px !important;
 } 
+
+/* CSV Generator Styles */
+.csv-upload-container {
+    margin: 20px 0;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.csv-preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: #fff;
+}
+
+.csv-preview-table th,
+.csv-preview-table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.csv-preview-table th {
+    background: #f5f5f5;
+    font-weight: 600;
+}
+
+.csv-preview-table tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+.csv-mapping-container {
+    margin-top: 20px;
+}
+
+.csv-mapping-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.csv-mapping-row label {
+    min-width: 120px;
+}
+
+.csv-mapping-row select {
+    flex: 1;
+}
+
+.csv-progress {
+    margin-top: 20px;
+    display: none;
+}
+
+.csv-progress-bar {
+    height: 20px;
+    background: #f0f0f1;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.csv-progress-bar-inner {
+    height: 100%;
+    background: #2271b1;
+    width: 0;
+    transition: width 0.3s ease;
+}
+
+.csv-status {
+    margin-top: 10px;
+    font-style: italic;
+} 

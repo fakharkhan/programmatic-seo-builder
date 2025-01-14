@@ -48,6 +48,7 @@ class PSEO_Admin {
             <div class="pseo-tabs">
                 <div class="pseo-tab-nav">
                     <button class="pseo-tab-button active" data-tab="generator">Page Generator</button>
+                    <button class="pseo-tab-button" data-tab="csv-generator">CSV Generator</button>
                     <button class="pseo-tab-button" data-tab="settings">Settings</button>
                 </div>
 
@@ -99,6 +100,60 @@ class PSEO_Admin {
                                 <button type="submit" class="button button-primary">Generate Page</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+
+                <!-- CSV Generator Tab -->
+                <div class="pseo-tab-content" id="csv-generator">
+                    <div class="pseo-form-container">
+                        <h2>Generate Pages from CSV</h2>
+                        
+                        <div class="form-group">
+                            <label for="template_page_csv">Select Template Page:</label>
+                            <div class="template-select-group">
+                                <select id="template_page_csv" name="template_page_csv">
+                                    <option value="">Select a page...</option>
+                                    <?php foreach ($pages as $page): ?>
+                                        <option value="<?php echo esc_attr($page->ID); ?>">
+                                            <?php echo esc_html($page->post_title); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <a href="#" class="preview-template dashicons dashicons-visibility" id="preview-template-csv" title="View template page" target="_blank" style="display: none;"></a>
+                            </div>
+                        </div>
+
+                        <div class="csv-upload-container">
+                            <div class="form-group">
+                                <label for="csv_file">Upload CSV File:</label>
+                                <input type="file" id="csv_file" name="csv_file" accept=".csv" />
+                                <p class="description">Upload a CSV file where:<br>
+                                - First row contains the text to find<br>
+                                - Following rows contain the replacement values<br>
+                                - All rows must have the same number of columns<br><br>
+                                Example:<br>
+                                Laravel,Alabama<br>
+                                React,New York<br>
+                                Angular,New York<br>
+                                Open AI,New York</p>
+                            </div>
+                            
+                            <div id="csv-preview" style="display: none;">
+                                <h3>CSV Preview</h3>
+                                <div class="csv-preview-content"></div>
+                            </div>
+                        </div>
+
+                        <div class="csv-progress" style="display: none;">
+                            <div class="csv-progress-bar">
+                                <div class="csv-progress-bar-inner"></div>
+                            </div>
+                            <div class="csv-status">Processing row 0 of 0...</div>
+                        </div>
+
+                        <div class="form-group-submit">
+                            <button type="button" id="generate-from-csv" class="button button-primary" disabled>Generate Pages</button>
+                        </div>
                     </div>
                 </div>
 

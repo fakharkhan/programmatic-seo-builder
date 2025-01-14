@@ -250,4 +250,210 @@ jQuery(document).ready(function($) {
     $(document).on('click', '.remove-row', function() {
         $(this).closest('.dynamic-row').remove();
     });
+
+    // CSV Generator functionality
+    let csvData = null;
+    let csvHeaders = null;
+
+    // File upload handler
+    $('#csv_file').on('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const csv = e.target.result;
+            processCSV(csv);
+        };
+        reader.readAsText(file);
+    });
+
+    function processCSV(csv) {
+        // Parse CSV and remove empty lines
+        const lines = csv.split('\n')
+            .map(line => line.trim())
+            .filter(line => line)
+            .map(line => line.split(',').map(cell => cell.trim())); // Split by comma and trim cells
+        
+        if (lines.length < 2) {
+            showMessage('CSV must contain at least 2 rows (find values and at least one replace row)', 'error');
+            return;
+        }
+
+        // First row contains the "find" values
+        const findValues = lines[0];
+        
+        // Rest of the rows contain "replace" values
+        const replaceRows = lines.slice(1);
+
+        // Validate that all rows have the same number of columns
+        if (!replaceRows.every(row => row.length === findValues.length)) {
+            showMessage('All rows must have the same number of columns', 'error');
+            return;
+        }
+
+        csvHeaders = findValues;
+        csvData = replaceRows.map(row => {
+            const rowData = {};
+            findValues.forEach((find, index) => {
+                rowData[find] = row[index] || '';
+            });
+            return rowData;
+        });
+
+        // Update preview table
+        showCSVPreview(findValues);
+        
+        // Enable generate button if template is selected
+        updateGenerateButton();
+    }
+
+    function showCSVPreview(findValues) {
+        let tableHTML = '<table class="csv-preview-table">';
+        
+        // Headers (Find Values)
+        tableHTML += '<tr><th>Row</th>';
+        findValues.forEach(value => {
+            tableHTML += `<th>Find: "${value}"</th>`;
+        });
+        tableHTML += '</tr>';
+        
+        // Preview all replace rows
+        csvData.forEach((row, index) => {
+            tableHTML += `<tr><td>Replace ${index + 1}</td>`;
+            findValues.forEach(find => {
+                tableHTML += `<td>${row[find]}</td>`;
+            });
+            tableHTML += '</tr>';
+        });
+        
+        tableHTML += '</table>';
+        
+        $('.csv-preview-content').html(tableHTML);
+        $('#csv-preview').show();
+    }
+
+    function updateGenerateButton() {
+        const templateSelected = $('#template_page_csv').val() !== '';
+        const fileUploaded = csvData !== null;
+        
+        $('#generate-from-csv').prop('disabled', !(templateSelected && fileUploaded));
+    }
+
+    // Template selection handler for CSV generator
+    $('#template_page_csv').on('change', function() {
+        const templateId = $(this).val();
+        const previewLink = $('#preview-template-csv');
+        
+        if (templateId) {
+            // Get the permalink via AJAX
+            $.ajax({
+                url: pseoAjax.ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'pseo_get_template_url',
+                    nonce: pseoAjax.nonce,
+                    template_id: templateId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        previewLink.attr('href', response.data.url).show();
+                    } else {
+                        previewLink.hide();
+                    }
+                },
+                error: function() {
+                    previewLink.hide();
+                }
+            });
+        } else {
+            previewLink.hide();
+        }
+        
+        updateGenerateButton();
+    });
+
+    // Add generate pages handler:
+    $('#generate-from-csv').on('click', function() {
+        const button = $(this);
+        const templateId = $('#template_page_csv').val();
+        const totalRows = csvData.length;
+        let processedRows = 0;
+        
+        button.prop('disabled', true);
+        $('.csv-progress').show();
+        
+        // Process each row sequentially
+        function processRow(index) {
+            if (index >= csvData.length) {
+                showMessage(`Successfully generated ${processedRows} pages`, 'success');
+                $('.csv-progress').hide();
+                button.prop('disabled', false);
+                return;
+            }
+
+            const row = csvData[index];
+            const replacements = {};
+            
+            // Build replacements object from CSV data
+            csvHeaders.forEach(find => {
+                replacements[find] = {
+                    find: find,
+                    replace: row[find]
+                };
+            });
+
+            // Update progress
+            const progress = ((index + 1) / totalRows) * 100;
+            $('.csv-progress-bar-inner').css('width', `${progress}%`);
+            $('.csv-status').text(`Processing row ${index + 1} of ${totalRows}...`);
+
+            // Generate page using existing AJAX function
+            $.ajax({
+                url: pseoAjax.ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'pseo_clone_page',
+                    nonce: pseoAjax.nonce,
+                    template_id: templateId,
+                    replacements: replacements
+                },
+                success: function(response) {
+                    if (response.success) {
+                        processedRows++;
+                    }
+                    // Process next row
+                    processRow(index + 1);
+                },
+                error: function() {
+                    showMessage(`Error processing row ${index + 1}`, 'error');
+                    processRow(index + 1); // Continue with next row despite error
+                }
+            });
+        }
+
+        // Start processing rows
+        processRow(0);
+    });
+
+    // Update the description in the admin page to show the correct format
+    function updateCSVDescription() {
+        const description = `
+            <p class="description">Upload a CSV file where:<br>
+            - First row contains the text to find<br>
+            - Following rows contain the replacement values<br>
+            - All rows must have the same number of columns<br><br>
+            Example:<br>
+            Laravel,Alabama<br>
+            React,New York<br>
+            Angular,New York<br>
+            Open AI,New York</p>
+        `;
+        $('#csv_file').siblings('.description').html(description);
+    }
+
+    // Call this when document is ready
+    $(document).ready(function() {
+        updateCSVDescription();
+    });
 }); 
