@@ -174,9 +174,10 @@ jQuery(document).ready(function($) {
     $('#template_page').on('change', function() {
         const templateId = $(this).val();
         const previewLink = $('#preview-template');
+        const keywordFindInput = $('#keyword_find');
         
         if (templateId) {
-            // Get the permalink via AJAX
+            // Get the permalink and title via AJAX
             $.ajax({
                 url: pseoAjax.ajaxurl,
                 type: 'POST',
@@ -188,16 +189,21 @@ jQuery(document).ready(function($) {
                 success: function(response) {
                     if (response.success) {
                         previewLink.attr('href', response.data.url).show();
+                        // Set the page title to keyword find input
+                        keywordFindInput.val(response.data.title);
                     } else {
                         previewLink.hide();
+                        keywordFindInput.val('');
                     }
                 },
                 error: function() {
                     previewLink.hide();
+                    keywordFindInput.val('');
                 }
             });
         } else {
             previewLink.hide();
+            keywordFindInput.val('');
         }
     });
 

@@ -204,12 +204,16 @@ class PSEO_Page_Generator {
         }
 
         $url = get_permalink($template_id);
+        $title = get_the_title($template_id);
         
         if (!$url) {
             wp_send_json_error(array('message' => 'Template URL not found'));
             return;
         }
 
-        wp_send_json_success(array('url' => $url));
+        wp_send_json_success(array(
+            'url' => $url,
+            'title' => $title
+        ));
     }
 } 
