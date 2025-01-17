@@ -7,6 +7,7 @@ class PSEO_Page_Generator {
         $this->api_handler = new PSEO_API_Handler();
         add_action('wp_ajax_pseo_clone_page', array($this, 'ajax_clone_page'));
         add_action('wp_ajax_pseo_get_template_url', array($this, 'ajax_get_template_url'));
+        add_action('wp_ajax_pseo_generate_content', array($this, 'ajax_generate_content'));
         add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
         add_action('save_post', array($this, 'save_meta_data'));
         add_action('wp_head', array($this, 'output_meta_tags'));
@@ -282,6 +283,62 @@ class PSEO_Page_Generator {
         wp_send_json_success(array(
             'url' => $url,
             'title' => $title
+        ));
+    }
+
+    public function ajax_generate_content() {
+        check_ajax_referer('pseo_nonce', 'nonce');
+
+        if (!current_user_can('publish_posts')) {
+            wp_send_json_error('Unauthorized access');
+        }
+
+        $title = sanitize_text_field($_POST['title']);
+        $keywords = sanitize_text_field($_POST['keywords']);
+        $tone = sanitize_text_field($_POST['tone']);
+        $word_count = intval($_POST['word_count']);
+        $page_builder = sanitize_text_field($_POST['page_builder']);
+
+        // Create the prompt for the AI
+        $prompt = "Write a {$word_count} word article about {$title}. ";
+        $prompt .= "Use these keywords: {$keywords}. ";
+        $prompt .= "The tone should be {$tone}. ";
+        $prompt .= "Format the content with proper headings, paragraphs, and sections.";
+
+        // Generate content using the API
+        $content = $this->api_handler->generate_content($prompt, $page_builder);
+
+        if (is_wp_error($content)) {
+            wp_send_json_error($content->get_error_message());
+        }
+
+        // Create the WordPress page
+        $page_data = array(
+            'post_title'    => $title,
+            'post_content'  => $content,
+            'post_status'   => 'draft',
+            'post_type'     => 'page'
+        );
+
+        $page_id = wp_insert_post($page_data);
+
+        if (is_wp_error($page_id)) {
+            wp_send_json_error('Failed to create page: ' . $page_id->get_error_message());
+        }
+
+        // Add meta data
+        update_post_meta($page_id, '_pseo_generated', true);
+        update_post_meta($page_id, '_pseo_keywords', $keywords);
+        update_post_meta($page_id, '_pseo_page_builder', $page_builder);
+
+        // Generate and save meta description
+        $meta_description = wp_trim_words(strip_tags($content), 25, '...');
+        update_post_meta($page_id, '_pseo_meta_description', $meta_description);
+
+        wp_send_json_success(array(
+            'page_id' => $page_id,
+            'edit_url' => get_edit_post_link($page_id, 'raw'),
+            'preview_url' => get_preview_post_link($page_id)
         ));
     }
 } 

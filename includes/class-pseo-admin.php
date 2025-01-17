@@ -145,6 +145,24 @@ class PSEO_Admin {
                                        placeholder="Enter the main keyword for the page" required>
                             </div>
 
+                            <div class="form-group">
+                                <label for="content_tone">Content Tone:</label>
+                                <select id="content_tone" name="content_tone">
+                                    <option value="professional">Professional</option>
+                                    <option value="casual">Casual</option>
+                                    <option value="friendly">Friendly</option>
+                                    <option value="authoritative">Authoritative</option>
+                                    <option value="informative">Informative</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="word_count">Word Count:</label>
+                                <input type="number" id="word_count" name="word_count" 
+                                       value="1000" min="500" max="3000" step="100">
+                                <p class="description">Choose between 500 and 3000 words</p>
+                            </div>
+
                             <div class="form-group-submit">
                                 <button type="submit" class="button button-primary">Generate Content</button>
                             </div>

@@ -448,6 +448,59 @@ jQuery(document).ready(function($) {
         processRow(0);
     });
 
+    // AI Content Generator Form Handler
+    $('#pseo-ai-generator-form').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        const submitButton = form.find('button[type="submit"]');
+        
+        // Get form values
+        const title = $('#page_title').val().trim();
+        const keywords = $('#page_keyword').val().trim();
+        const tone = $('#content_tone').val() || 'professional';
+        const wordCount = $('#word_count').val() || '1000';
+        const pageBuilder = $('#page_builder').val();
+
+        if (!title || !keywords) {
+            showMessage('Please fill in all required fields.', 'error');
+            return;
+        }
+
+        submitButton.prop('disabled', true).text('Generating Content...');
+
+        // Make AJAX call to generate content
+        $.ajax({
+            url: pseoAjax.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'pseo_generate_content',
+                nonce: pseoAjax.nonce,
+                title: title,
+                keywords: keywords,
+                tone: tone,
+                word_count: wordCount,
+                page_builder: pageBuilder
+            },
+            success: function(response) {
+                if (response.success) {
+                    showMessage('Content generated successfully! Redirecting to editor...', 'success');
+                    // Redirect to the edit page after 2 seconds
+                    setTimeout(function() {
+                        window.location.href = response.data.edit_url;
+                    }, 2000);
+                } else {
+                    showMessage(response.data || 'Error generating content.', 'error');
+                }
+            },
+            error: function() {
+                showMessage('Error generating content. Please try again.', 'error');
+            },
+            complete: function() {
+                submitButton.prop('disabled', false).text('Generate Content');
+            }
+        });
+    });
+
     // Update the description in the admin page to show the correct format
     function updateCSVDescription() {
         const description = `
