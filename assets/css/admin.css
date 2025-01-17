@@ -422,3 +422,36 @@ button:disabled {
     margin-top: 10px;
     font-style: italic;
 } 
+
+.form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-col {
+    flex: 1;
+}
+
+.form-col select {
+    width: 100%;
+    max-width: 100%;
+}
+
+.form-col .description {
+    margin-top: 5px;
+    font-style: italic;
+    color: #666;
+}
+
+/* Responsive layout */
+@media screen and (max-width: 782px) {
+    .form-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .form-col {
+        width: 100%;
+    }
+} 

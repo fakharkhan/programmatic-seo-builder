@@ -109,28 +109,48 @@ class PSEO_Admin {
                     <div class="pseo-form-container">
                         <h2>AI Content Generator</h2>
                         <form id="pseo-ai-generator-form">
-                            <div class="form-group">
-                                <label for="page_builder">Select Page Builder:</label>
-                                <select id="page_builder" name="page_builder" required>
-                                    <option value="">Select a page builder...</option>
-                                    <?php 
-                                    // Check for common page builders
-                                    $page_builders = array(
-                                        'elementor' => 'Elementor',
-                                        'divi-builder' => 'Divi Builder',
-                                        'gutenberg' => 'Gutenberg',
-                                        'wpbakery' => 'WPBakery Page Builder',
-                                        'oxygen' => 'Oxygen Builder',
-                                        'fusion-builder' => 'Avada Builder'
-                                    );
-                                    
-                                    foreach ($page_builders as $slug => $name) {
-                                        if (is_plugin_active($slug . '/' . $slug . '.php') || $slug === 'gutenberg') {
-                                            echo '<option value="' . esc_attr($slug) . '">' . esc_html($name) . '</option>';
+                            <div class="form-group form-row">
+                                <div class="form-col">
+                                    <label for="page_builder">Select Page Builder:</label>
+                                    <select id="page_builder" name="page_builder" required>
+                                        <option value="">Select a page builder...</option>
+                                        <?php 
+                                        // Check for common page builders
+                                        $page_builders = array(
+                                            'elementor' => 'Elementor',
+                                            'divi-builder' => 'Divi Builder',
+                                            'gutenberg' => 'Gutenberg',
+                                            'wpbakery' => 'WPBakery Page Builder',
+                                            'oxygen' => 'Oxygen Builder',
+                                            'fusion-builder' => 'Avada Builder'
+                                        );
+                                        
+                                        foreach ($page_builders as $slug => $name) {
+                                            if (is_plugin_active($slug . '/' . $slug . '.php') || $slug === 'gutenberg') {
+                                                echo '<option value="' . esc_attr($slug) . '">' . esc_html($name) . '</option>';
+                                            }
                                         }
-                                    }
-                                    ?>
-                                </select>
+                                        ?>
+                                    </select>
+                                </div>
+                                <div class="form-col">
+                                    <label for="cta_page">Call-to-Action Page:</label>
+                                    <select id="cta_page" name="cta_page">
+                                        <option value="">Select a CTA page (optional)...</option>
+                                        <?php 
+                                        $cta_pages = get_pages(array(
+                                            'sort_column' => 'post_title',
+                                            'sort_order' => 'ASC',
+                                            'hierarchical' => 0
+                                        ));
+                                        foreach ($cta_pages as $cta_page): ?>
+                                            <option value="<?php echo esc_attr($cta_page->ID); ?>">
+                                                <?php echo esc_html($cta_page->post_title); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    
+                                </div>
                             </div>
 
                             <div class="form-group">
@@ -144,24 +164,7 @@ class PSEO_Admin {
                                 <input type="text" id="page_keyword" name="page_keyword" 
                                        placeholder="Enter the main keyword for the page" required>
                             </div>
-                            <div class="form-group">
-                                <label for="cta_page">Call-to-Action Page:</label>
-                                <select id="cta_page" name="cta_page">
-                                    <option value="">Select a CTA page (optional)...</option>
-                                    <?php 
-                                    $cta_pages = get_pages(array(
-                                        'sort_column' => 'post_title',
-                                        'sort_order' => 'ASC',
-                                        'hierarchical' => 0
-                                    ));
-                                    foreach ($cta_pages as $cta_page): ?>
-                                        <option value="<?php echo esc_attr($cta_page->ID); ?>">
-                                            <?php echo esc_html($cta_page->post_title); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <p class="description">Select a page to use as Call-to-Action at the end of the generated content</p>
-                            </div>
+                            
 
                             <div class="form-group">
                                 <label for="word_count">Word Count:</label>
