@@ -49,6 +49,7 @@ class PSEO_Admin {
                 <div class="pseo-tab-nav">
                     <button class="pseo-tab-button active" data-tab="generator">Page Generator</button>
                     <button class="pseo-tab-button" data-tab="csv-generator">CSV Generator</button>
+                    <button class="pseo-tab-button" data-tab="ai-generator">AI Generator</button>
                     <button class="pseo-tab-button" data-tab="settings">Settings</button>
                 </div>
 
@@ -98,6 +99,54 @@ class PSEO_Admin {
 
                             <div class="form-group-submit">
                                 <button type="submit" class="button button-primary">Generate Page</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- AI Generator Tab -->
+                <div class="pseo-tab-content" id="ai-generator">
+                    <div class="pseo-form-container">
+                        <h2>AI Content Generator</h2>
+                        <form id="pseo-ai-generator-form">
+                            <div class="form-group">
+                                <label for="page_builder">Select Page Builder:</label>
+                                <select id="page_builder" name="page_builder" required>
+                                    <option value="">Select a page builder...</option>
+                                    <?php 
+                                    // Check for common page builders
+                                    $page_builders = array(
+                                        'elementor' => 'Elementor',
+                                        'divi-builder' => 'Divi Builder',
+                                        'gutenberg' => 'Gutenberg',
+                                        'wpbakery' => 'WPBakery Page Builder',
+                                        'oxygen' => 'Oxygen Builder',
+                                        'fusion-builder' => 'Avada Builder'
+                                    );
+                                    
+                                    foreach ($page_builders as $slug => $name) {
+                                        if (is_plugin_active($slug . '/' . $slug . '.php') || $slug === 'gutenberg') {
+                                            echo '<option value="' . esc_attr($slug) . '">' . esc_html($name) . '</option>';
+                                        }
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="page_title">Page Title:</label>
+                                <input type="text" id="page_title" name="page_title" 
+                                       placeholder="Enter the page title" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="page_keyword">Primary Keyword:</label>
+                                <input type="text" id="page_keyword" name="page_keyword" 
+                                       placeholder="Enter the main keyword for the page" required>
+                            </div>
+
+                            <div class="form-group-submit">
+                                <button type="submit" class="button button-primary">Generate Content</button>
                             </div>
                         </form>
                     </div>
