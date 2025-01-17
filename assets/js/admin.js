@@ -1,15 +1,27 @@
 jQuery(document).ready(function($) {
+    // Function to set active tab
+    function setActiveTab(tabId) {
+        $('.pseo-tab-button').removeClass('active');
+        $(`.pseo-tab-button[data-tab="${tabId}"]`).addClass('active');
+        
+        $('.pseo-tab-content').removeClass('active');
+        $(`#${tabId}`).addClass('active');
+        
+        // Store active tab in localStorage
+        localStorage.setItem('pseoActiveTab', tabId);
+    }
+
+    // On page load, check for stored tab
+    const storedTab = localStorage.getItem('pseoActiveTab');
+    if (storedTab) {
+        setActiveTab(storedTab);
+    }
+
     // Tab switching
     $('.pseo-tab-button').on('click', function(e) {
         e.preventDefault();
         const tabId = $(this).data('tab');
-        
-        // Update active states
-        $('.pseo-tab-button').removeClass('active');
-        $(this).addClass('active');
-        
-        $('.pseo-tab-content').removeClass('active');
-        $(`#${tabId}`).addClass('active');
+        setActiveTab(tabId);
     });
 
     // Test API Connection
