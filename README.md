@@ -1,6 +1,6 @@
 # Programmatic SEO Builder
 
-A powerful WordPress plugin for automatically generating SEO-optimized pages using templates and dynamic content replacement.
+A powerful WordPress plugin for automatically generating SEO-optimized pages using templates, dynamic content replacement, and AI-powered content generation.
 
 ## Features
 
@@ -8,72 +8,53 @@ A powerful WordPress plugin for automatically generating SEO-optimized pages usi
 - Select any existing page as a template
 - Replace content dynamically using find & replace
 - Add multiple find & replace pairs
-- Preview template before generation
+- Real-time template preview functionality
 - Generated pages are saved as drafts for review
+- Support for all major page builders
 
 ### 2. Bulk CSV Page Generator
 - Generate multiple pages from a single CSV file
-- Simple CSV format:
-  - First row: Text to find (e.g., [keyword], [location])
-  - Following rows: Replacement values
-- Real-time CSV preview
-- Progress tracking during generation
-- All pages are saved as drafts
+- Simple CSV format with dynamic column support
+- Real-time CSV preview and validation
+- Progress tracking with visual progress bar
+- Batch processing for large CSV files
+- Error handling and reporting
+- All pages saved as drafts for review
 
-### 3. Settings & Configuration
-- DeepSeek API integration for content enhancement
-- Test API connection functionality
+### 3. AI Content Generator
+- Integration with DeepSeek API for content generation
+- Smart page builder detection and compatibility
+- Customizable word count (500-3000 words)
+- SEO-optimized content structure
+- Support for custom CTAs and internal linking
+- Content validation and cleanup
+- Semantic HTML output
+- Page builder specific optimizations
+
+### 4. Settings & Configuration
+- Secure DeepSeek API key management
+- API connection testing functionality
 - Common content definitions for consistent replacements
-- Secure API key storage
+- Page builder specific settings
+- User capability management
+- Secure nonce verification for all operations
 
-## Usage
+### 5. Content Optimization Features
+- SEO-optimized content structure
+- Automatic meta description generation
+- Proper heading hierarchy (H1, H2, H3)
+- Clean, semantic HTML output
+- Mobile-friendly content formatting
+- Support for bullet points and formatting
+- Internal linking capabilities
 
-### Single Page Generation
-1. Select a template page
-2. Enter primary keyword find/replace values
-3. Add additional find/replace pairs as needed
-4. Generate the page
-
-### CSV Bulk Generation
-1. Select a template page
-2. Upload a CSV file formatted as:
-    [keyword],[location]
-    Web Designer,New York
-    Web Developer,Los Angeles
-    UI Designer,Chicago
-3. Review the CSV preview
-4. Click "Generate Pages" to create all pages
-
-## Installation
-
-1. Upload the plugin files to `/wp-content/plugins/programmatic-seo-builder`
-2. Activate the plugin through the 'Plugins' menu in WordPress
-3. Configure your DeepSeek API key in the Settings tab
-4. Start generating pages
-
-## Requirements
-
-- WordPress 5.0 or higher
-- PHP 7.2 or higher
-- DeepSeek API key for content enhancement
-
-## Security
-
-- All generated pages are saved as drafts for review
-- API keys are stored securely in WordPress options
-- Nonce verification for all AJAX requests
-- User capability checks for all actions
-
-## Support
-
-For support, please visit the [GitHub repository](https://github.com/fakharkhan/programmatic-seo-builder) or contact the plugin authors.
-
-## Authors
-
-- Fakhar Zaman Khan
-- Hasan Zaheer
-- Mustafa Najoom
-
-## License
-
-GPL v2 or later
+### 6. Integration & Compatibility
+- Works with all major WordPress page builders
+  - Gutenberg (Default)
+  - Elementor
+  - Divi Builder
+  - WPBakery Page Builder
+  - Oxygen Builder
+  - Avada Builder
+- Compatible with WordPress multisite
+- Works with popular SEO plugins
