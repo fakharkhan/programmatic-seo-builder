@@ -167,9 +167,9 @@ class PSEO_Admin {
                             
 
                             <div class="form-group">
-                                <label for="word_count">Word Count:</label>
-                                <input type="number" id="word_count" name="word_count" 
-                                       value="500" min="500" max="3000" step="50">
+                                <label for="word_count">Word Count: <span id="word_count_display">500</span></label>
+                                <input type="range" id="word_count" name="word_count" 
+                                       value="500" min="500" max="3000" step="50" class="word-count-slider">
                                 <p class="description">Choose between 500 and 3000 words</p>
                             </div>
 

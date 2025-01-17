@@ -518,8 +518,15 @@ jQuery(document).ready(function($) {
         $('#csv_file').siblings('.description').html(description);
     }
 
+    // Word count slider handler
+    $('#word_count').on('input', function() {
+        $('#word_count_display').text($(this).val());
+    });
+
     // Call this when document is ready
     $(document).ready(function() {
         updateCSVDescription();
+        // Initialize word count display
+        $('#word_count_display').text($('#word_count').val());
     });
 }); 
