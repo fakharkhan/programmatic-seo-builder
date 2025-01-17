@@ -287,58 +287,203 @@ class PSEO_Page_Generator {
     }
 
     public function ajax_generate_content() {
-        check_ajax_referer('pseo_nonce', 'nonce');
-
-        if (!current_user_can('publish_posts')) {
-            wp_send_json_error('Unauthorized access');
-        }
-
-        $title = sanitize_text_field($_POST['title']);
-        $keywords = sanitize_text_field($_POST['keywords']);
-        $tone = sanitize_text_field($_POST['tone']);
-        $word_count = intval($_POST['word_count']);
-        $page_builder = sanitize_text_field($_POST['page_builder']);
-
-        // Create the prompt for the AI
-        $prompt = "Write a {$word_count} word article about {$title}. ";
-        $prompt .= "Use these keywords: {$keywords}. ";
-        $prompt .= "The tone should be {$tone}. ";
-        $prompt .= "Format the content with proper headings, paragraphs, and sections.";
-
-        // Generate content using the API
-        $content = $this->api_handler->generate_content($prompt, $page_builder);
-
+        $this->verify_permissions();
+        $params = $this->get_generation_params();
+        
+        // Generate content using AI
+        $content = $this->generate_ai_content($params);
         if (is_wp_error($content)) {
             wp_send_json_error($content->get_error_message());
         }
 
-        // Create the WordPress page
-        $page_data = array(
-            'post_title'    => $title,
-            'post_content'  => $content,
-            'post_status'   => 'draft',
-            'post_type'     => 'page'
-        );
-
-        $page_id = wp_insert_post($page_data);
-
+        // Create and process the page
+        $page_id = $this->create_page($params, $content);
         if (is_wp_error($page_id)) {
             wp_send_json_error('Failed to create page: ' . $page_id->get_error_message());
         }
 
-        // Add meta data
-        update_post_meta($page_id, '_pseo_generated', true);
-        update_post_meta($page_id, '_pseo_keywords', $keywords);
-        update_post_meta($page_id, '_pseo_page_builder', $page_builder);
+        wp_send_json_success($this->get_page_response($page_id));
+    }
 
-        // Generate and save meta description
-        $meta_description = wp_trim_words(strip_tags($content), 25, '...');
-        update_post_meta($page_id, '_pseo_meta_description', $meta_description);
+    private function verify_permissions() {
+        check_ajax_referer('pseo_nonce', 'nonce');
+        if (!current_user_can('publish_posts')) {
+            wp_send_json_error('Unauthorized access');
+        }
+    }
 
-        wp_send_json_success(array(
+    private function get_generation_params() {
+        return array(
+            'title' => sanitize_text_field($_POST['title']),
+            'keywords' => sanitize_text_field($_POST['keywords']),
+            'word_count' => intval($_POST['word_count']),
+            'page_builder' => sanitize_text_field($_POST['page_builder'])
+        );
+    }
+
+    private function generate_ai_content($params) {
+        $prompt = $this->build_ai_prompt($params);
+        return $this->api_handler->generate_content($prompt, $params['page_builder']);
+    }
+
+    private function build_ai_prompt($params) {
+        return sprintf(
+            "Write a %d word article about %s. Use these keywords: %s. Format the content with proper headings, paragraphs, and sections.",
+            $params['word_count'],
+            $params['title'],
+            $params['keywords']
+        );
+    }
+
+    private function create_page($params, $content) {
+        $processed_content = $this->process_content_for_builder($content, $params['page_builder']);
+        
+        $page_id = wp_insert_post(array(
+            'post_title'    => $params['title'],
+            'post_content'  => $processed_content,
+            'post_status'   => 'draft',
+            'post_type'     => 'page'
+        ));
+
+        if (!is_wp_error($page_id)) {
+            $this->save_page_meta($page_id, $params, $processed_content);
+        }
+
+        return $page_id;
+    }
+
+    private function save_page_meta($page_id, $params, $content) {
+        $meta_data = array(
+            '_pseo_generated' => true,
+            '_pseo_keywords' => $params['keywords'],
+            '_pseo_page_builder' => $params['page_builder'],
+            '_pseo_meta_description' => wp_trim_words(wp_strip_all_tags($content), 25, '...')
+        );
+
+        foreach ($meta_data as $key => $value) {
+            update_post_meta($page_id, $key, $value);
+        }
+    }
+
+    private function get_page_response($page_id) {
+        return array(
             'page_id' => $page_id,
             'edit_url' => get_edit_post_link($page_id, 'raw'),
             'preview_url' => get_preview_post_link($page_id)
-        ));
+        );
+    }
+
+    /**
+     * Process the generated content based on the page builder
+     *
+     * @param string $content The raw content from AI
+     * @param string $page_builder The selected page builder
+     * @return string Processed content ready for the page builder
+     */
+    private function process_content_for_builder($content, $page_builder) {
+        switch ($page_builder) {
+            case 'gutenberg':
+                // For Gutenberg, wrap content in proper block format
+                $content = $this->process_gutenberg_content($content);
+                break;
+            
+            case 'elementor':
+                // For Elementor, ensure proper section/column structure
+                $content = $this->process_elementor_content($content);
+                break;
+            
+            case 'divi-builder':
+                // For Divi, wrap in proper Divi module structure
+                $content = $this->process_divi_content($content);
+                break;
+
+            case 'fusion-builder':
+                // For Fusion Builder, no additional processing needed
+                // Content should already be in proper shortcode format
+                break;
+            
+            default:
+                // For other builders or default, ensure proper HTML structure
+                $content = $this->process_default_content($content);
+        }
+
+        return $content;
+    }
+
+    /**
+     * Process content for Gutenberg
+     */
+    private function process_gutenberg_content($content) {
+        // Convert regular paragraphs to Gutenberg blocks
+        $content = preg_replace('/<p>(.*?)<\/p>/s', "<!-- wp:paragraph -->\n<p>$1</p>\n<!-- /wp:paragraph -->", $content);
+        
+        // Convert headings to Gutenberg blocks
+        for ($i = 1; $i <= 6; $i++) {
+            $content = preg_replace(
+                "/<h{$i}>(.*?)<\/h{$i}>/s",
+                "<!-- wp:heading {\"level\":{$i}} -->\n<h{$i}>$1</h{$i}>\n<!-- /wp:heading -->",
+                $content
+            );
+        }
+
+        // Convert lists to Gutenberg blocks
+        $content = preg_replace(
+            '/<ul>(.*?)<\/ul>/s',
+            "<!-- wp:list -->\n<ul>$1</ul>\n<!-- /wp:list -->",
+            $content
+        );
+
+        return $content;
+    }
+
+    /**
+     * Process content for Elementor
+     */
+    private function process_elementor_content($content) {
+        // Wrap the entire content in Elementor section structure
+        return '<div data-elementor-type="wp-page" data-elementor-id="{{ID}}" class="elementor elementor-{{ID}}">' .
+               '<div class="elementor-inner">' .
+               '<div class="elementor-section-wrap">' .
+               '<section class="elementor-section elementor-top-section">' .
+               '<div class="elementor-container">' .
+               '<div class="elementor-row">' .
+               '<div class="elementor-column elementor-col-100">' .
+               '<div class="elementor-column-wrap">' .
+               '<div class="elementor-widget-wrap">' .
+               $content .
+               '</div></div></div></div></div></section>' .
+               '</div></div></div>';
+    }
+
+    /**
+     * Process content for Divi Builder
+     */
+    private function process_divi_content($content) {
+        // Wrap content in Divi's structure
+        return '[et_pb_section admin_label="section"]' .
+               '[et_pb_row admin_label="row"]' .
+               '[et_pb_column type="4_4"]' .
+               '[et_pb_text admin_label="Text"]' .
+               $content .
+               '[/et_pb_text]' .
+               '[/et_pb_column]' .
+               '[/et_pb_row]' .
+               '[/et_pb_section]';
+    }
+
+    /**
+     * Process content for default/other page builders
+     */
+    private function process_default_content($content) {
+        // Ensure proper HTML structure
+        if (!preg_match('/<\/?html[^>]*>/', $content)) {
+            // Remove any existing body tags
+            $content = preg_replace('/<\/?body[^>]*>/', '', $content);
+            
+            // Wrap content in a div for better structure
+            $content = '<div class="pseo-generated-content">' . $content . '</div>';
+        }
+
+        return $content;
     }
 } 

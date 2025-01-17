@@ -457,9 +457,9 @@ jQuery(document).ready(function($) {
         // Get form values
         const title = $('#page_title').val().trim();
         const keywords = $('#page_keyword').val().trim();
-        const tone = $('#content_tone').val() || 'professional';
-        const wordCount = $('#word_count').val() || '1000';
+        const wordCount = $('#word_count').val() || '250';
         const pageBuilder = $('#page_builder').val();
+        const ctaPage = $('#cta_page').val();
 
         if (!title || !keywords) {
             showMessage('Please fill in all required fields.', 'error');
@@ -477,16 +477,17 @@ jQuery(document).ready(function($) {
                 nonce: pseoAjax.nonce,
                 title: title,
                 keywords: keywords,
-                tone: tone,
                 word_count: wordCount,
-                page_builder: pageBuilder
+                page_builder: pageBuilder,
+                cta_page: ctaPage
             },
             success: function(response) {
                 if (response.success) {
                     showMessage('Content generated successfully! Redirecting to editor...', 'success');
                     // Redirect to the edit page after 2 seconds
                     setTimeout(function() {
-                        window.location.href = response.data.edit_url;
+                       // Open in new tab instead of redirecting
+                        window.open(response.data.edit_url, '_blank');
                     }, 2000);
                 } else {
                     showMessage(response.data || 'Error generating content.', 'error');

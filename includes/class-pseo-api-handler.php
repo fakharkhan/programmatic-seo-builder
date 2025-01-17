@@ -57,22 +57,56 @@ class PSEO_API_Handler {
         // Get page builder specific instructions
         $builder_instructions = $this->get_page_builder_instructions($page_builder);
 
-        // Prepare the request payload
+        // Core system prompt for content generation
+        $system_prompt = 'You are an expert SEO content writer. Generate high-quality, SEO-optimized content that is: ' .
+                        '1. Engaging and value-driven ' .
+                        '2. Properly structured with clear hierarchy ' .
+                        '3. Optimized for search engines and readability ' .
+                        '4. Focused on user intent and conversion. ' .
+                        'Content Requirements: ' .
+                        '- Start with a compelling H1 title incorporating the main keyword naturally ' .
+                        '- Include a meta description (150-160 characters) ' .
+                        '- Create logical sections with H2 and H3 headings ' .
+                        '- Add relevant internal links and clear CTAs ' .
+                        '- Use bullet points and formatting for better readability. ' .
+                        'Technical Requirements: ' . $builder_instructions;
+
+        // Enhanced user prompt with content structure guidance
+        $enhanced_prompt = $prompt . "\n\n" .
+            "Content Structure Guide:\n" .
+            "1. Title Section:\n" .
+            "   - SEO-optimized H1 title\n" .
+            "   - Engaging meta description\n" .
+            "2. Introduction:\n" .
+            "   - Hook the reader\n" .
+            "   - Present the value proposition\n" .
+            "3. Main Content:\n" .
+            "   - Logical H2 sections\n" .
+            "   - Supporting H3 subsections\n" .
+            "   - Relevant examples and evidence\n" .
+            "4. Conclusion:\n" .
+            "   - Clear summary\n" .
+            "   - Actionable next steps\n" .
+            "\nUse only clean HTML (<h1>, <h2>, <h3>, <p>, <ul>, <li>, <a>, <strong>, <em>).";
+
+        // Prepare the request payload with optimized parameters
         $payload = array(
-            'model' => 'deepseek-chat',
+            'model' => 'deepseek-coder',
             'messages' => array(
                 array(
                     'role' => 'system',
-                    'content' => 'You are a professional content writer and WordPress expert. Create high-quality, SEO-optimized content. ' . 
-                                'Format the content specifically for ' . ucfirst($page_builder) . '. ' . $builder_instructions
+                    'content' => $system_prompt
                 ),
                 array(
                     'role' => 'user',
-                    'content' => $prompt
+                    'content' => $enhanced_prompt
                 )
             ),
-            'max_tokens' => 2000,
-            'temperature' => 0.7
+            'max_tokens' => 4000,
+            'temperature' => 0.7,
+            'top_p' => 0.9,
+            'frequency_penalty' => 0.3,
+            'presence_penalty' => 0.3
         );
 
         $response = wp_remote_post($this->api_endpoint, array(
@@ -81,7 +115,7 @@ class PSEO_API_Handler {
                 'Content-Type' => 'application/json',
             ),
             'body' => json_encode($payload),
-            'timeout' => 60,
+            'timeout' => 120, // Increased timeout for longer content
             'sslverify' => false,
             'httpversion' => '1.1',
             'blocking' => true
@@ -121,6 +155,11 @@ class PSEO_API_Handler {
 
         // Get the content and clean it up
         $content = $this->cleanup_generated_content($body['choices'][0]['message']['content']);
+        
+        // Validate content structure
+        if (!$this->validate_content_structure($content)) {
+            return new WP_Error('content_structure', 'Generated content does not meet structural requirements');
+        }
 
         return $content;
     }
@@ -132,20 +171,44 @@ class PSEO_API_Handler {
      * @return string The cleaned content
      */
     private function cleanup_generated_content($content) {
-        // Remove backticks and html tags if they wrap the entire content
-        $content = preg_replace('/^`html\s*|`$/i', '', $content);
-        $content = preg_replace('/^<html>\s*|<\/html>$/i', '', $content);
-
-        // Remove any remaining backtick formatting
-        $content = preg_replace('/^```\s*|```$/m', '', $content);
-
-        // Ensure proper paragraph formatting
-        $content = preg_replace('/\n{3,}/', "\n\n", $content); // Replace multiple newlines with double newlines
+        // Remove code block markers
+        $content = preg_replace('/```html\s*/', '', $content);
+        $content = preg_replace('/```\s*/', '', $content);
         
-        // Clean up any markdown-style headers that might have been included
-        $content = preg_replace('/^#{1,6}\s/m', '', $content);
-
+        // Remove any DOCTYPE or HTML/BODY tags
+        $content = preg_replace('/<(!DOCTYPE|html|body|head)[^>]*>/', '', $content);
+        $content = preg_replace('/<\/(html|body|head)>/', '', $content);
+        
+        // Clean up multiple blank lines
+        $content = preg_replace("/[\r\n]+/", "\n", $content);
+        
+        // Remove extra whitespace
+        $content = preg_replace('/\s+/', ' ', $content);
+        
+        // Ensure proper spacing around HTML tags
+        $content = preg_replace('/>\s+</', ">\n<", $content);
+        
         return trim($content);
+    }
+
+    /**
+     * Validate the structure of generated content
+     *
+     * @param string $content The generated content
+     * @return boolean Whether the content meets structural requirements
+     */
+    private function validate_content_structure($content) {
+        // Check for required elements
+        $has_h1 = preg_match('/<h1[^>]*>.*?<\/h1>/', $content);
+        $has_h2 = preg_match('/<h2[^>]*>.*?<\/h2>/', $content);
+        $has_paragraphs = preg_match('/<p[^>]*>.*?<\/p>/', $content);
+        
+        // Ensure basic structure requirements are met
+        if (!$has_h1 || !$has_h2 || !$has_paragraphs) {
+            return false;
+        }
+        
+        return true;
     }
 
     /**
@@ -155,27 +218,16 @@ class PSEO_API_Handler {
      * @return string Instructions for the AI
      */
     private function get_page_builder_instructions($page_builder) {
-        $instructions = array(
-            'gutenberg' => 'Use WordPress Gutenberg blocks format. Structure content with <!-- wp:paragraph --> and <!-- wp:heading --> blocks. ' .
-                          'Use h2 for main sections and h3 for subsections. Include proper spacing between blocks.',
-            
-            'elementor' => 'Format content for Elementor. Use standard HTML with proper section and div structures. ' .
-                          'Use h2 for main sections and h3 for subsections. Add class="elementor-heading-title" to headings.',
-            
-            'divi-builder' => 'Format content for Divi Builder. Use standard HTML with proper section and div structures. ' .
-                             'Add class="et_pb_text_inner" to text containers. Use h2 for main sections and h3 for subsections.',
-            
-            'wpbakery' => 'Format content for WPBakery Page Builder. Use [vc_row] and [vc_column] shortcodes. ' .
-                         'Wrap text in [vc_column_text] shortcodes. Use h2 for main sections and h3 for subsections.',
-            
-            'oxygen' => 'Format content for Oxygen Builder. Use standard HTML with proper section and div structures. ' .
-                       'Use h2 for main sections and h3 for subsections.',
-            
-            'fusion-builder' => 'Format content for Avada Fusion Builder. Use [fusion_text] shortcodes for text blocks. ' .
-                               'Use [fusion_title] for headings. Structure content in [fusion_builder_container] and [fusion_builder_row].'
-        );
-
-        return isset($instructions[$page_builder]) ? $instructions[$page_builder] : $instructions['gutenberg'];
+        return 'Use only these HTML elements for content structure: ' .
+               '<h1> for main title, ' .
+               '<h2> for sections, ' .
+               '<h3> for subsections, ' .
+               '<p> for paragraphs, ' .
+               '<ul>/<li> for lists, ' .
+               '<a> for links, ' .
+               '<strong> for emphasis, ' .
+               '<em> for italic text. ' .
+               'Maintain clean, semantic HTML without any page builder-specific code.';
     }
 
 }

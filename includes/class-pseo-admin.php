@@ -144,24 +144,33 @@ class PSEO_Admin {
                                 <input type="text" id="page_keyword" name="page_keyword" 
                                        placeholder="Enter the main keyword for the page" required>
                             </div>
-
                             <div class="form-group">
-                                <label for="content_tone">Content Tone:</label>
-                                <select id="content_tone" name="content_tone">
-                                    <option value="professional">Professional</option>
-                                    <option value="casual">Casual</option>
-                                    <option value="friendly">Friendly</option>
-                                    <option value="authoritative">Authoritative</option>
-                                    <option value="informative">Informative</option>
+                                <label for="cta_page">Call-to-Action Page:</label>
+                                <select id="cta_page" name="cta_page">
+                                    <option value="">Select a CTA page (optional)...</option>
+                                    <?php 
+                                    $cta_pages = get_pages(array(
+                                        'sort_column' => 'post_title',
+                                        'sort_order' => 'ASC',
+                                        'hierarchical' => 0
+                                    ));
+                                    foreach ($cta_pages as $cta_page): ?>
+                                        <option value="<?php echo esc_attr($cta_page->ID); ?>">
+                                            <?php echo esc_html($cta_page->post_title); ?>
+                                        </option>
+                                    <?php endforeach; ?>
                                 </select>
+                                <p class="description">Select a page to use as Call-to-Action at the end of the generated content</p>
                             </div>
 
                             <div class="form-group">
                                 <label for="word_count">Word Count:</label>
                                 <input type="number" id="word_count" name="word_count" 
-                                       value="1000" min="500" max="3000" step="100">
+                                       value="500" min="500" max="3000" step="50">
                                 <p class="description">Choose between 500 and 3000 words</p>
                             </div>
+
+                            
 
                             <div class="form-group-submit">
                                 <button type="submit" class="button button-primary">Generate Content</button>
